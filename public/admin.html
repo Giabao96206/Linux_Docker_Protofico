@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#10152b">
+  <title>Quản trị lời nhắn — BT-02</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body{min-height:100vh;display:flex;flex-direction:column}.admin-main{width:min(700px,calc(100% - 32px));margin:7vh auto;flex:1}.admin-card{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(32,40,76,.92),rgba(22,28,54,.9));padding:clamp(24px,5vw,42px)}.admin-card h1{font:600 clamp(30px,6vw,42px)/1.2 'Space Grotesk',sans-serif;letter-spacing:-.05em;margin:0 0 12px}.admin-card>p{color:var(--muted);font-size:14px}.admin-form{display:grid;gap:12px;margin-top:26px}.admin-form label{font-size:12px;font-weight:700}.admin-form input,.admin-form textarea{width:100%;background:#0c1127;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:14px;font:14px 'DM Sans',sans-serif;outline:none}.admin-form input:focus,.admin-form textarea:focus{border-color:var(--purple)}.admin-form textarea{min-height:130px;resize:vertical}.admin-form .button{justify-self:start}.admin-status{min-height:22px;font-size:12px;color:var(--mint)}.admin-status.error{color:#ffb7a8}.current-banner{border:1px dashed rgba(166,138,255,.4);border-radius:13px;padding:15px;margin-top:22px;color:#bcc3df;font-size:13px;overflow-wrap:anywhere}.current-banner b{display:block;color:var(--purple);font-size:10px;letter-spacing:.12em;margin-bottom:6px}.admin-note{font-size:11px!important;color:#8189a8!important;margin-top:20px}.admin-footer{justify-content:center}.admin-footer p{order:0!important;width:auto!important}.admin-form button:disabled{opacity:.65}
+  </style>
+</head>
+<body>
+  <div class="announcement"><span class="announcement-tag">✦ ADMIN</span><div class="marquee-window"><div class="marquee-track"><span>Quản trị lời nhắn trên website cá nhân</span><span aria-hidden="true">Quản trị lời nhắn trên website cá nhân</span></div></div></div>
+  <main class="admin-main">
+    <div class="admin-card">
+      <p class="eyebrow">BT-02 / MOBILE ADMIN</p>
+      <h1>Cập nhật top banner</h1>
+      <p>Nhập mật khẩu quản trị và lời nhắn mới. Banner trên trang chủ sẽ tự làm mới trong tối đa khoảng 8 giây.</p>
+      <form class="admin-form" id="adminForm">
+        <label for="adminPassword">Mật khẩu quản trị</label>
+        <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Nhập ADMIN_PASSWORD">
+        <label for="bannerMessage">Lời nhắn mới <span>(tối đa 240 ký tự)</span></label>
+        <textarea id="bannerMessage" maxlength="240" required placeholder="Ví dụ: Chúc mọi người một ngày thật vui! ✨"></textarea>
+        <div class="form-bottom"><span id="bannerCount">0 / 240</span><button class="button button-primary" type="submit">Cập nhật banner <span>↗</span></button></div>
+        <p class="admin-status" id="adminStatus" role="status" aria-live="polite"></p>
+      </form>
+      <div class="current-banner"><b>LỜI NHẮN HIỆN TẠI</b><span id="currentBanner">Đang tải…</span></div>
+      <p class="admin-note">Trang này không hiển thị trên menu công khai. Đừng chia sẻ mật khẩu quản trị. Hãy dùng HTTPS khi phát hành website.</p>
+      <p><a class="text-link" href="/">← Quay lại trang chủ</a></p>
+    </div>
+  </main>
+  <footer class="site-footer shell admin-footer"><p>BT-02 · Node.js · Express · Docker</p></footer>
+  <script>
+    const form = document.getElementById('adminForm');
+    const textArea = document.getElementById('bannerMessage');
+    const counter = document.getElementById('bannerCount');
+    const statusEl = document.getElementById('adminStatus');
+    const currentEl = document.getElementById('currentBanner');
+    async function refreshCurrent() {
+      try {
+        const response = await fetch('/api/banner', { cache: 'no-store' });
+        const data = await response.json();
+        currentEl.textContent = data.message || 'Chưa có lời nhắn';
+      } catch { currentEl.textContent = 'Không tải được banner hiện tại.'; }
+    }
+    textArea.addEventListener('input', () => counter.textContent = `${textArea.value.length} / 240`);
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = form.querySelector('button');
+      button.disabled = true;
+      statusEl.className = 'admin-status';
+      statusEl.textContent = 'Đang cập nhật…';
+      try {
+        const response = await fetch('/api/admin/banner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Password': document.getElementById('adminPassword').value },
+          body: JSON.stringify({ message: textArea.value.trim() })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Không thể cập nhật banner.');
+        statusEl.textContent = 'Đã cập nhật banner thành công!';
+        currentEl.textContent = data.message;
+        textArea.value = '';
+        counter.textContent = '0 / 240';
+      } catch (error) {
+        statusEl.className = 'admin-status error';
+        statusEl.textContent = error.message || 'Có lỗi xảy ra.';
+      } finally { button.disabled = false; }
+    });
+    refreshCurrent();
+  </script>
+</body>
+</html>

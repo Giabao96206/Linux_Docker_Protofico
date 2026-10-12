@@ -1,0 +1,16 @@
+{
+  "name": "bt-02-personal-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BT-02 personal profile website using Node.js, Express and Docker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "4.21.2"
+  }
+}
